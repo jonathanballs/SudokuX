@@ -1,25 +1,18 @@
 #SudokuX
 
 ##Files included
-
 ###sudokux.c
 This is the source file that contains the main function. This part of the program doesn't actually reads the problems from the command line or an input file. After being solved, it displays them in a terminal UI with ncurses.
-
 ###gamesolver.c
 This is the part which actually solves each sudoku. I have commented how it works so go give it a read!
-
 ###examplefiles/
 I have included two files in this directory which contain a number of sudoku problems to test the file with.
-
 ##HOWTO compile
 $ make
 There are some dependencies needed to make this work but make shall tell you.
-
 ##HOWTO run
 $ ./sudokux exampleproblems/small
-
-
-##Examplel output
+##Example output
 
                                      small
 

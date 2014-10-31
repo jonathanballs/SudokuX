@@ -1,66 +1,27 @@
-##########README###########
+#SudokuX
 
-Files included
-========================
-sudokusolver.c
-gamesolver.c
-msk_009
-Testsudokus
+##Files included
 
-sudokusolver.c
-========================
-This is a simple program which reads sudoku puzzles from a file, displays it on
-the screen, sends the unsolved puzzle to gamesolver.c(solvedSudoku()) and then 
-displays the the (hopefully solved) puzzle that it recieves back from
-gamesolver.c on the screen next to the unsolved version for comparison. It also
-collects stats on how many puzzles have been solved etc.
+###sudokux.c
+This is the source file that contains the main function. This part of the program doesn't actually reads the problems from the command line or an input file. After being solved, it displays them in a terminal UI with ncurses.
 
-gamesolver.c
-========================
-This is the part of the program which doesn't work. The 'main' function is
-solveSudoku(currentProblem[81]) which accepts an array of length 81 with each
-member being a square in the sudoku ('0' being an unsolved square). Starting
-with a unfinished grid, in theory it should work like this:
+###gamesolver.c
+This is the part which actually solves each sudoku. I have commented how it works so go give it a read!
 
-1) fill in all empty squares that have only one possibility.
-2) if the program made a mistake (i.e an empty square is found which has no
-   possible legal value), return -1
-2) if solved, return 1 to the function that called it;
-3) if still unsolved (empty squares exist but everything seems fine); Go into
-   the first empty square, fill in the first possibility and then call the
-   solveSudoku() (i.e go back to step 1) function with your new puzzle containing
-   your testing square.
-	i) if it fails, go back and try a different possibility
-	ii) if still unsolved (go to step 2)
-	iii) if solved, swap the theoretical grid with the and continue;
+###examplefiles/
+I have included two files in this directory which contain a number of sudoku problems to test the file with.
 
-msk_009 & Testsudokus
-========================
-These are the files which contain the sudoku puzzles. There is one file per line.
-Each puzzle is kept as a string of 81 numbers or dots which represent each value of
-the sudoku reading along the lines of the puzzle like reading a book.
+##HOWTO compile
+$ make
+There are some dependencies needed to make this work but make shall tell you.
 
-Other information
-========================
-1) In theory gamesolver.c should solve all Sudoku puzzles that you throw at it so
-   that fact that it solves barely any is not a good thing!
-2) It only works on linux at the moment due to how the program gets the file from
-   the operating system
+##HOWTO run
+$ ./sudokux exampleproblems/small
 
-HOWTO compile
-========================
-$ gcc sudokux.c -lncurses
-There are some dependencies needed to make this work but the gcc should tell you
-which ones you need.
 
-HOWTO run
-========================
-$ ./a.out msk_009
-*msk_009 is the name of the file which contains all of the Sudoku puzzles. There
-is also 'Testsudokus' which is much larger. If it works, you should see something
-like below. Press enter to proceed through the puzzles.
+##Examplel output
 
-                                     msk_009
+                                     small
 
 
              + - - - + - - - + - - - +    + - - - + - - - + - - - +
@@ -82,7 +43,3 @@ like below. Press enter to proceed through the puzzles.
                                Failed:    0
                              Unsolved:    0
                             Remaining:    1012
-
-I hope that I have covered everything If anything is unclear about what I'm trying
-to do, just send me an email.
-Jonny.

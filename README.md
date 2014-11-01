@@ -9,6 +9,7 @@ This is the part which actually solves each sudoku. I have commented how it work
 I have included two files in this directory which contain a number of sudoku problems to test the file with.
 ##HOWTO compile
 $ make
+
 There are some dependencies needed to make this work but make shall tell you.
 ##HOWTO run
 $ ./sudokux exampleproblems/small

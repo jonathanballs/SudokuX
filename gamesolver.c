@@ -1,5 +1,5 @@
 // SudokuX
-// Release 1.4
+// Release 1.5
 // Arguments: File containing Sudoku Puzzle Strings
 // Output: Ascii graphic of last puzzle solved and percentage solved on exit
 // (C) Jonathan Balls 2013

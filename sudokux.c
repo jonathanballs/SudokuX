@@ -17,18 +17,17 @@ main(int argc, char *argv[]) {
 	int			i, j;
 
 	// Number of puzzles solved and failed.
-	int 		solved = 		0;
-	int			failed = 		0;
+	int			solved =		0;
+	int			failed =		0;
 
 	// Total number of problems to be solved.
-	int			problemCount;
+	int			problemCount =	0;
 
 	// Percentage of puzzles solved
 	float 		percentSolved;
 
 	// Variable to hold filename of sudoku puzzles
 	char		filename[MAX_FILENAME_LENGTH];
-	int			currentproblem[SUDOKU_CELLS];
 
 	// Check whether an argument has been passed and whether it contains an
 	// accessible filename.
@@ -38,23 +37,17 @@ main(int argc, char *argv[]) {
 	// argv[1] is where filename should be. This needs to be updated.
 	strcpy(filename, argv[1]);
 
-	// Exit with error 1 if there aren't any problems in the file
-	problemCount = getProblemCount(filename);
-	if (!problemCount)
-		return 1;
-
 	// Gets all _valid_ sudoku puzzles from the file and puts them into a
 	// large array.
-	char problemList[problemCount][SUDOKU_CELLS];
-	fileToStack(filename, problemList, problemCount);
+	int **problemList = fileTo2DArray(filename, &problemCount);
 
-	//initialises screen for ncurses
-	initscr();//initialises screen for ncurses
-	for (i=0;i<problemCount;i++) { //solves each sudoku
-		printUnsolved(problemList, i, filename);
-		setCurrentProblem(problemList, currentproblem, i); //takes a new problem from the list
+	// Start ncurses and create windows etc.
+	// struct windows window;
+	// prepareterminal(filename, window);
 
-		switch (solveSudoku(currentproblem)){
+	for (i=0; i<problemCount; i++) {
+		// displayPuzzle(window.unsolved, problemList[i]);
+		switch (solveSudoku(problemList[i])){
 			case 1:
 				solved++;
 				break;
@@ -62,38 +55,72 @@ main(int argc, char *argv[]) {
 				failed++;
 				break;
 		}
-		setSolvedProblem(problemList, currentproblem, i);
-		printSolved(problemList, i, solved, failed, problemCount);
+		// displayPuzzle(window.solved, problemList[i]);
+		getch();
 	}
+
+	// End ncurses screen
 	endwin();
+
+	// Print stats and percentages
 	percentSolved = solved;
 	percentSolved = 100 * percentSolved / problemCount;
 	printf("%d(%.2f%%) solved out of %d\n", solved, percentSolved, problemCount);
+
 	return 0;
 }
 
-setCurrentProblem(char problemList[][SUDOKU_CELLS],int currentproblem[SUDOKU_CELLS], int i) {
-	int j;
-	for (j=0;j<SUDOKU_CELLS;j++) {
-		if (problemList[i][j] == EMPTY_CELL) {
-			currentproblem[j] = 0;
-		}
-		else {
-			currentproblem[j] = problemList[i][j] - '0';
-		}
-	}
-}
 
-setSolvedProblem(char problemList[][SUDOKU_CELLS], int currentproblem[SUDOKU_CELLS], int i) {
-	int j;
-	for (j=0;j<SUDOKU_CELLS;j++) {
-		if (currentproblem[j]==0) {
-			problemList[i][j]= EMPTY_CELL;
-		}
-		else {
-			problemList[i][j]= currentproblem[j] + '0';
-		}
+// returns a pointer to a 2D array of all the sudoku puzzles in 
+int **fileTo2DArray(char filename[MAX_FILENAME_LENGTH], int *problemCount) {
+	int 		i;
+
+	// Pointer to the array of pointers to arrays of ints.
+	int**		problemList;
+
+	int 		linelength;
+	char 		*line =		NULL;
+	size_t		len =		0;
+
+	// Create a file pointer and open the file of sudoku puzzles.
+	FILE 		*fp;
+	fp = fopen(filename, "r");
+
+	// Find the maximum number of puzzles stored in a file by dividing filesize
+	// by the size of a puzzle (plus one for \n and EOF characters)
+	fseek(fp, 0, SEEK_END);
+	int maxpuzzles = ftell(fp) / (SUDOKU_CELLS + 1);
+	fseek(fp, 0, SEEK_SET);
+
+	// Allocate a 2D array using information based on the max size of the array.
+	problemList = (int**) malloc(maxpuzzles * sizeof(int*));
+	for (i=0; i<maxpuzzles; i++) {
+		problemList[i] = malloc(SUDOKU_CELLS * sizeof(int));
 	}
+
+	while ((linelength = getline(&line, &len, fp)) != -1) {
+
+		// Length of standard sudoku puzzle and the newline/EOF character.
+		if (linelength != SUDOKU_CELLS + 1) {
+			continue;
+		}
+
+		// Translate ascii numbers to their dec equivalents in the problemList
+		for (i=0; i<SUDOKU_CELLS; i++) {
+			if (line[i] == EMPTY_CELL) {
+				problemList[*problemCount][i] = 0;
+			}
+			else {
+				problemList[*problemCount][i] = line[i] - '0';
+			}
+		}
+		*problemCount = *problemCount + 1;
+	}
+
+	// free up allocated space for storing individual lines and close the file
+	free(line);
+	fclose(fp);
+	return problemList;
 }
 
 errCheck(int argc, char *argv[]) { //checks for errors in the arguments
@@ -110,104 +137,63 @@ errCheck(int argc, char *argv[]) { //checks for errors in the arguments
 	return 1;
 }
 
-getProblemCount(char filename[MAX_FILENAME_LENGTH]) { //accepts filename and returns linecount
-	FILE *pf;
-	char ch;
-	int lines = 0;
-	pf = fopen(filename, "r");
-	ch = fgetc(pf);
-	while (ch != EOF) {
-		if (ch == '\n')
-			lines++;
-		ch = fgetc(pf);
-	}
-	fclose(pf);
-	return lines;
+void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows window) {
+	// Get the centre of the terminal screen
+	initscr();
+
+	struct coordinates centre;
+	getmaxyx(stdscr, centre.y, centre.x);
+	centre.x = centre.x / 2;
+	centre.y = centre.y / 2;
+
+	curs_set(0);
+
+	mvprintw(0, (COLS / 2) - (strlen(filename)/2), filename);//prints filename center top
+	int height = 13;
+	int width = 25;
+	int starty = 4;	/* Calculating for a center placement */
+	int startx = (COLS / 2);	/* of the window		*/
+	refresh();
+
+	// Create a window for unsolved puzzle
+	WINDOW *unsolvedwin;
+	unsolvedwin = newwin(height, width, starty, startx - 27);
+	wrefresh(unsolvedwin);
+
+	// Create a window for solved puzzle
+	WINDOW *solvedwin;
+	solvedwin = newwin(height, width, starty, startx + 2);
+	wrefresh(solvedwin);
 }
 
-fileToStack(char filename[MAX_FILENAME_LENGTH],char problemList[][SUDOKU_CELLS],int problemCount) {
+displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[81]) {
 	int i;
-	FILE *pf;
-	pf = fopen(filename, "r");
-
-	for (i=0;i<problemCount;i++) {
-		fgets(problemList[i], 255, pf);
-  	}
-	fclose(pf);
-}
-
-printUnsolved(char problemList[][SUDOKU_CELLS],int problem, char filename[256]) {
-	clear();
-	int i, row, col, startx;
-	getmaxyx(stdscr,row,col);
-	startx = col/2 - 27;
-	int currenty = 2;
-
-	mvprintw(0, (col/2) - (strlen(filename)/2), "%s", filename);//prints filename center top
-	mvprintw(++currenty, startx,"+ - - - + - - - + - - - +");
-	mvprintw(++currenty, startx, "| ");
-
-  for (i=0;i<SUDOKU_CELLS;i++) {
-	printw("%c ", problemList[problem][i]);
-	if ((i+1)%3 == 0) {
-	  if ((i+1)%9 == 0) {
-		if ((i+1)%27 == 0) {
-		  if ((i+1)%SUDOKU_CELLS == 0) {
-			printw("|");
-			mvprintw(++currenty, startx, "+ - - - + - - - + - - - +");
-			move(++currenty, startx);
-			continue; }
-		  printw("|");
-		  mvprintw(++currenty, startx, "+ - - - + - - - + - - - +");
-		  mvprintw(++currenty, startx, "| ");
-		  continue; }
-		printw("|");
-		mvprintw(++currenty, startx, "| ");
-		continue; }
-	  printw("| ");
-	  continue; }
-  }
-}
-
-printSolved(char problemList[][SUDOKU_CELLS],int problem, int solved, int failed, int problemCount) {
-	int i, row, col, startx;
-	getmaxyx(stdscr,row,col);
-	startx = col/2 + 2;
-	int currenty = 2;
-
-	mvprintw(++currenty, startx,"+ - - - + - - - + - - - +");
-	mvprintw(++currenty, startx, "| ");
-
+	struct coordinates coord = {0, 0};
+	mvwprintw(puzzleWin, ++coord.y, 0,"+ - - - + - - - + - - - +");
+	mvprintw(++coord.y, 0, "| ");
 	for (i=0;i<SUDOKU_CELLS;i++) {
-		printw("%c ", problemList[problem][i]);
+		printw("%d ", sudokupuzzle[i]);
 		if ((i+1)%3 == 0) {
 			if ((i+1)%9 == 0) {
 				if ((i+1)%27 == 0) {
-					if ((i+1)%81 == 0) {
+					if ((i+1)%SUDOKU_CELLS == 0) {
 						printw("|");
-						mvprintw(++currenty, startx, "+ - - - + - - - + - - - +");
-						move(++currenty, startx);
+						mvprintw(++coord.y, 0, "+ - - - + - - - + - - - +");
+						move(++coord.y, 0);
 						continue;
 					}
-				printw("|");
-				mvprintw(++currenty, startx, "+ - - - + - - - + - - - +");
-				mvprintw(++currenty, startx, "| ");
-				continue;
+					printw("|");
+					mvprintw(++coord.y, 0, "+ - - - + - - - + - - - +");
+					mvprintw(++coord.y, 0, "| ");
+					continue;
 				}
-			printw("|");
-			mvprintw(++currenty, startx, "| ");
-			continue;
+				printw("|");
+				mvprintw(++coord.y, 0, "| ");
+				continue; 
 			}
 			printw("| ");
 			continue;
 		}
 	}
-
-	int centre = col/2;
-	mvprintw(++currenty, centre-16, "Sudoku Number:    %d", problem+1);
-	mvprintw(++currenty, centre-9, "Solved:    %d", solved);
-	mvprintw(++currenty, centre-9, "Failed:    %d", failed);
-	mvprintw(++currenty, centre-11, "Unsolved:    %d", (problem+1)-solved);
-	mvprintw(++currenty, centre-12, "Remaining:    %d", (problemCount-problem)-1);
-	refresh();
+	wrefresh(puzzleWin);
 }

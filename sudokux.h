@@ -24,3 +24,12 @@ struct coordinates
 	int x;
 	int y;
 };
+
+struct windows
+{
+	WINDOW *unsolved;
+	WINDOW *solved;
+};
+
+void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows window);
+int **fileTo2DArray(char filename[MAX_FILENAME_LENGTH], int *problemCount);

@@ -19,6 +19,18 @@
 //character used to signify empty cell
 #define EMPTY_CELL					'.'
 
+//character height of ascii puzzle
+#define ASCII_HEIGHT				14
+
+//character width of ascii puzzle
+#define ASCII_WIDTH					25
+
+//ascii margin between top edge and puzzles
+#define ASCII_TOP_MARGIN			3
+
+//ascii margin between the solved and unsolved puzzles.
+#define ASCII_CENTRE_MARGIN			4
+
 struct coordinates
 {
 	int x;
@@ -31,5 +43,11 @@ struct windows
 	WINDOW *solved;
 };
 
-void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows window);
+struct successStatistics
+{
+	int solved;
+	int failed;
+};
+
+void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window);
 int **fileTo2DArray(char filename[MAX_FILENAME_LENGTH], int *problemCount);

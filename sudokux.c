@@ -42,20 +42,19 @@ main(int argc, char *argv[]) {
 	int **problemList = fileTo2DArray(filename, &problemCount);
 
 	// Start ncurses and create windows etc.
-	// struct windows window;
-	// prepareterminal(filename, window);
+	struct windows window;
+	prepareterminal(filename, &window);
 
 	for (i=0; i<problemCount; i++) {
-		// displayPuzzle(window.unsolved, problemList[i]);
+		displayPuzzle(window.unsolved, problemList[i]);
 		switch (solveSudoku(problemList[i])){
 			case 1:
 				solved++;
 				break;
 			case -1:
-				failed++;
 				break;
 		}
-		// displayPuzzle(window.solved, problemList[i]);
+		displayPuzzle(window.solved, problemList[i]);
 		getch();
 	}
 
@@ -137,61 +136,76 @@ errCheck(int argc, char *argv[]) { //checks for errors in the arguments
 	return 1;
 }
 
-void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows window) {
+void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window) {
 	// Get the centre of the terminal screen
 	initscr();
 
-	struct coordinates centre;
-	getmaxyx(stdscr, centre.y, centre.x);
-	centre.x = centre.x / 2;
-	centre.y = centre.y / 2;
+	// struct coordinates centre;
+	// getmaxyx(stdscr, centre.y, centre.x);
+	// centre.x = centre.x / 2;
+	// centre.y = centre.y / 2;
 
 	curs_set(0);
 
-	mvprintw(0, (COLS / 2) - (strlen(filename)/2), filename);//prints filename center top
-	int height = 13;
-	int width = 25;
-	int starty = 4;	/* Calculating for a center placement */
-	int startx = (COLS / 2);	/* of the window		*/
+	// Print filename at the top of the window
+	mvprintw(0, (COLS / 2) - (strlen(filename)/2), filename);
+
 	refresh();
 
-	// Create a window for unsolved puzzle
+	// Create a window for unsolved puzzle. It is positioned according to
+	// constants defined in the header file. They are all annotated so
+	// feel free to change what you see fit.
 	WINDOW *unsolvedwin;
-	unsolvedwin = newwin(height, width, starty, startx - 27);
+	unsolvedwin = newwin(ASCII_HEIGHT, ASCII_WIDTH, ASCII_TOP_MARGIN,
+					(COLS / 2) - (ASCII_WIDTH + (ASCII_CENTRE_MARGIN / 2)));
 	wrefresh(unsolvedwin);
 
-	// Create a window for solved puzzle
+	// See above comment. Notice that this window is placed to the write
+	// instead of the left.
 	WINDOW *solvedwin;
-	solvedwin = newwin(height, width, starty, startx + 2);
+	solvedwin = newwin(ASCII_HEIGHT, ASCII_WIDTH, ASCII_TOP_MARGIN,
+					(COLS / 2) + (ASCII_CENTRE_MARGIN / 2));
 	wrefresh(solvedwin);
+
+	window->unsolved = unsolvedwin;
+	window->solved	 = solvedwin;
 }
 
-displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[81]) {
+
+// Displays a given puzzle in the window. The window is assumed to be of
+// correct size. This function needs to be rewritten to avoid assumptions and
+// display puzzles of other sizes than 9x9.
+// >muh magic numbers
+displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[SUDOKU_CELLS]) {
 	int i;
 	struct coordinates coord = {0, 0};
 	mvwprintw(puzzleWin, ++coord.y, 0,"+ - - - + - - - + - - - +");
-	mvprintw(++coord.y, 0, "| ");
+	mvwprintw(puzzleWin, ++coord.y, 0, "| ");
 	for (i=0;i<SUDOKU_CELLS;i++) {
-		printw("%d ", sudokupuzzle[i]);
-		if ((i+1)%3 == 0) {
-			if ((i+1)%9 == 0) {
-				if ((i+1)%27 == 0) {
+		if (sudokupuzzle[i] == 0) {
+			wprintw(puzzleWin, ". ");
+		} else {
+			wprintw(puzzleWin, "%d ", sudokupuzzle[i]);
+		}
+		if ((i+1)%(SUDOKU_COLUMNS / SUDOKU_BOX_COLUMNS) == 0) {
+			if ((i+1)%SUDOKU_ROWS == 0) {
+				if ((i+1)%(SUDOKU_BOX_ROWS*SUDOKU_ROWS) == 0) {
 					if ((i+1)%SUDOKU_CELLS == 0) {
-						printw("|");
-						mvprintw(++coord.y, 0, "+ - - - + - - - + - - - +");
-						move(++coord.y, 0);
+						wprintw(puzzleWin, "|");
+						mvwprintw(puzzleWin, ++coord.y, 0,"+ - - - + - - - + - - - +");
+						mvwprintw(puzzleWin, ++coord.y, 0, "| ");
 						continue;
 					}
-					printw("|");
-					mvprintw(++coord.y, 0, "+ - - - + - - - + - - - +");
+					wprintw(puzzleWin, "|");
+					mvwprintw(puzzleWin, ++coord.y, 0, "+ - - - + - - - + - - - +");
 					mvprintw(++coord.y, 0, "| ");
 					continue;
 				}
-				printw("|");
-				mvprintw(++coord.y, 0, "| ");
+				wprintw(puzzleWin, "|");
+				mvwprintw(puzzleWin, ++coord.y, 0, "| ");
 				continue; 
 			}
-			printw("| ");
+			wprintw(puzzleWin, "| ");
 			continue;
 		}
 	}

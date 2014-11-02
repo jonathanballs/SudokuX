@@ -49,7 +49,7 @@
 
 // The main function, this accepts puzzles and uses other functions to solve 
 // them
-solveSudoku(int sudokuGrid[SUDOKU_CELLS]) {
+enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]) {
 								  //returns 1 if solved, -1 if failed.
 	int i, j, result;
 	while (pencilIn(sudokuGrid) || crossHatching(sudokuGrid)) {
@@ -57,15 +57,15 @@ solveSudoku(int sudokuGrid[SUDOKU_CELLS]) {
 	}
 	switch(isSolved(sudokuGrid)) {
 		case 1:
-			return 1;
+			return SOLVED;
 		case 0:
 			return constraintSearch(sudokuGrid); //constraint search should always solve the problem in theory.
 		case -1:
-			return -1;
+			return FAILED;
 	}
 }
 
-constraintSearch(int sudokuGrid[SUDOKU_CELLS]) { //
+enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]) { //
 	int theocell;
 	int theogrid[SUDOKU_CELLS];
 	int i;
@@ -85,15 +85,15 @@ constraintSearch(int sudokuGrid[SUDOKU_CELLS]) { //
 		if (isLegal(theocell, i, sudokuGrid)) { //find a possibility in that cell
 			theogrid[theocell] = i; //set that possibility to the empty cell
 			switch (solveSudoku(theogrid)) { //attempt to solve
-				case -1: //if it fails
+				case FAILED: //if it fails
 					continue;
-				case 1:
+				case SOLVED:
 					setGrid(theogrid, sudokuGrid);
-					return 1;
+					return SOLVED;
 			}
 		}
 	}
-	return -1;
+	return FAILED;
 }
 
 pencilIn(int sudokuGrid[SUDOKU_CELLS]) { //sets cells which have only one possibility. returns 1 if solved a cell, else 0

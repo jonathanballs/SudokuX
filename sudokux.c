@@ -47,10 +47,10 @@ main(int argc, char *argv[]) {
 	for (i=0; i<problemCount; i++) {
 		displayPuzzle(window.unsolved, problemList[i]);
 		switch (solveSudoku(problemList[i])){
-			case 1:
+			case SOLVED:
 				solved++;
 				break;
-			case -1:
+			case FAILED:
 				break;
 		}
 		displayPuzzle(window.solved, problemList[i]);
@@ -226,12 +226,12 @@ void updateStatistics(int attempts, int solved, int problemCount, WINDOW *statis
 	int remaining = problemCount - attempts;
 	int currenty = 0;
 	int centre = STATISTICS_WIDTH / 2;
+	werase(statistics);
 
 	mvwprintw(statistics, ++currenty, centre-16, "Sudoku Number:    %d", attempts+1);
 	mvwprintw(statistics, ++currenty, centre-9, "Solved:    %d", solved);
 	mvwprintw(statistics, ++currenty, centre-9, "Failed:    %d", failed);
 	mvwprintw(statistics, ++currenty, centre-12, "Remaining:    %d", (remaining)-1);
-
 	wrefresh(statistics);
 
 	return;

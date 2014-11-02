@@ -13,6 +13,9 @@
 //total number of cells.
 #define SUDOKU_CELLS				SUDOKU_ROWS * SUDOKU_COLUMNS
 
+//number of cells in a box
+#define SUDOKU_BOX_CELLS			9
+
 //maximum length of the filename passed to the program.
 #define MAX_FILENAME_LENGTH			256
 
@@ -37,13 +40,21 @@
 //max width for a statistic. will be truncated after this.
 #define STATISTICS_WIDTH			40
 
+enum status {
+	solved,
+	incomplete,
+	failed
+};
 
+// These coordinates are used at various points when dealing with ncurses.
 struct coordinates
 {
 	int x;
 	int y;
 };
 
+// These windows are all sub-areas of the main sdtscr in ncurses. Their
+// functions whould be fairly self explanatory.
 struct windows
 {
 	WINDOW *unsolved;

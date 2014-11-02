@@ -45,7 +45,7 @@
 
 */
 
-
+#include <stdbool.h>
 
 // The main function accepts a puzzle array as an argument and uses other
 // functions to solve them. The array is modified directly so there is no need
@@ -59,7 +59,7 @@ enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]) {
 		;
 	}
 
-	switch(isSolved(sudokuGrid)) {
+	switch(puzzleStatus(sudokuGrid)) {
 		case SOLVED:
 			return SOLVED;
 		case FAILED:
@@ -111,7 +111,7 @@ enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]) { //
 
 // Passes over the sudoku puzzle and finds cells which only have one possible
 // legal value and then fills in said cell with said value.
-oneLegal(int sudokuGrid[SUDOKU_CELLS]) {
+bool oneLegal(int sudokuGrid[SUDOKU_CELLS]) {
 	int cell, i , j;
 	int result = 0;
 
@@ -131,7 +131,7 @@ oneLegal(int sudokuGrid[SUDOKU_CELLS]) {
 				// possible value and so you can safely reset the cell and
 				// continue the search.
 				if (sudokuGrid[cell]) {
-					result = 0;
+					result = false;
 					sudokuGrid[cell] = 0;
 					break;
 				}
@@ -140,7 +140,7 @@ oneLegal(int sudokuGrid[SUDOKU_CELLS]) {
 				// will be set accordingly.
 				else {
 					sudokuGrid[cell] = i;
-					result = 1;
+					result = true;
 				}
 			}
 		}
@@ -227,7 +227,7 @@ setGrid(int from[SUDOKU_CELLS], int to[SUDOKU_CELLS]) {
 }
 
 // Tests if a possible value is legal in the puzzle.
-int isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]) {
+bool isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]) {
 	int i;
 	int column = cellColumn(cell);
 	int row = cellRow(cell);
@@ -236,27 +236,27 @@ int isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]) {
 	// Test if it clashes with cells in the same column
 	for (i=0;i<SUDOKU_COLUMNS;i++) {
 		if (possibility == sudokuGrid[columnCell(column, i)] && cell != columnCell(column, i)) {
-			return 0;
+			return false;
 		}
 	}
 
 	// ...row
 	for (i=0;i<SUDOKU_ROWS;i++) {
 		if (possibility == sudokuGrid[rowCell(row, i)] && cell != rowCell(row, i)) {
-			return 0;
+			return false;
 		}
 	}
 
 	// ...box
 	for (i=0;i<SUDOKU_BOX_CELLS;i++) {
 		if (possibility == sudokuGrid[boxCell(box, i)] && cell != boxCell(box, i)) {
-			return 0;
+			return false;
 		}
 	}
-	return 1;
+	return true;
 }
 
-enum status isSolved(int sudokuGrid[SUDOKU_CELLS]){
+enum status puzzleStatus(int sudokuGrid[SUDOKU_CELLS]){
 	// the state is set to SOLVED only once at the beginning. If any problems
 	// are found, the state will be changed and will not return SOLVED.
 	enum status state = SOLVED;

@@ -72,4 +72,6 @@ void updateStatistics(int attempts, int solved, int problemCount, WINDOW *statis
 // gamesolver.c
 enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]);
 enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]);
-enum status isSolved(int sudokuGrid[SUDOKU_CELLS]);
+enum status puzzleStatus(int sudokuGrid[SUDOKU_CELLS]);
+bool oneLegal(int sudokuGrid[SUDOKU_CELLS]);
+bool isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]);

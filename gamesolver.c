@@ -35,7 +35,7 @@
 |                              |yes             | |constraintSearch() will |  |
 |                              |                +->create a copy of the    |  |
 | +----------+     +-----------v-------------+    |original puzzle with the|  |
-| |Return the|  no |Does the first cell that |    |possible value inserted.|  |
+| |Return the|  no |Does the first empty cell|    |possible value inserted.|  |
 | |failed    <-----+you try have at least one+---->This is then sent to    |  |
 | |puzzle.   |     |possible value?          |    |solveSudoku().          |  |
 | +----------+     +-------------------------+    +------------------------+  |

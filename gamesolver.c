@@ -20,7 +20,7 @@
                                |                  +-----------^-----------+    
                   +------------v-------------+                |                
                   |Pass the incomplete puzzle|                |no              
-                  |to the pencilIn() function|    +-----------+-----------+    
+                  |to the oneLegal() function|    +-----------+-----------+    
                   |which will fill in all the| yes|Are there any more     |    
                   |cells with only one       |  +-+possible values for the|    
                   |possible value.           |  | |cell?                  |    
@@ -47,48 +47,60 @@
 
 
 
-// The main function, this accepts puzzles and uses other functions to solve 
-// them
+// The main function accepts a puzzle array as an argument and uses other
+// functions to solve them. The array is modified directly so there is no need
+// to return it at the end of the function.
 enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]) {
-								  //returns 1 if solved, -1 if failed.
-	int i, j, result;
-	while (pencilIn(sudokuGrid) || crossHatching(sudokuGrid)) {
+	
+	// These two functions will fill in cells which only have one posssible
+	// value. They will continue passing over the puzzle until neither are able
+	// to fill in any more.
+	while (oneLegal(sudokuGrid) || crossHatching(sudokuGrid)) {
 		;
 	}
+
 	switch(isSolved(sudokuGrid)) {
-		case 1:
+		case SOLVED:
 			return SOLVED;
-		case 0:
-			return constraintSearch(sudokuGrid); //constraint search should always solve the problem in theory.
-		case -1:
+		case FAILED:
 			return FAILED;
+		case INCOMPLETE:
+			return constraintSearch(sudokuGrid);
 	}
 }
 
+// Trial & Error.
 enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]) { //
-	int theocell;
-	int theogrid[SUDOKU_CELLS];
+	int altcell;
+	int altgrid[SUDOKU_CELLS];
 	int i;
 
 	// Find the first empty cell in the sudoku puzzle
 	for (i=0;i<SUDOKU_CELLS;i++) {
 		if (!sudokuGrid[i]) {
-			theocell = i;
+			altcell = i;
 			break;
 		}
 	}
 
 	// Find the first possible number that could go into that cell and try to
-	// solve the puzzle with that. The guess will be wrong if the puzzle comes back failed and so a new guess will be tried in the same cell. This conitinues until the puzzle comes back solved or 
+	// solve the puzzle with that. The guess will be wrong if the puzzle comes
+	// back failed and so a new guess will be tried in the same cell. This
+	// continues until the puzzle comes back solved or 
 	for (i=1;i<=SUDOKU_BOX_CELLS;i++) {
-		setGrid(sudokuGrid, theogrid);
-		if (isLegal(theocell, i, sudokuGrid)) { //find a possibility in that cell
-			theogrid[theocell] = i; //set that possibility to the empty cell
-			switch (solveSudoku(theogrid)) { //attempt to solve
-				case FAILED: //if it fails
+		setGrid(sudokuGrid, altgrid);
+
+		//find a possibility in that cell
+		if (isLegal(altcell, i, sudokuGrid)) {
+
+			//set that possibility to the empty cell
+			altgrid[altcell] = i;
+
+			switch (solveSudoku(altgrid)) {
+				case FAILED:
 					continue;
 				case SOLVED:
-					setGrid(theogrid, sudokuGrid);
+					setGrid(altgrid, sudokuGrid);
 					return SOLVED;
 			}
 		}
@@ -96,31 +108,52 @@ enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]) { //
 	return FAILED;
 }
 
-pencilIn(int sudokuGrid[SUDOKU_CELLS]) { //sets cells which have only one possibility. returns 1 if solved a cell, else 0
+
+// Passes over the sudoku puzzle and finds cells which only have one possible
+// legal value and then fills in said cell with said value.
+oneLegal(int sudokuGrid[SUDOKU_CELLS]) {
 	int cell, i , j;
 	int result = 0;
-	for (cell=0;cell<SUDOKU_CELLS;cell++) { //for each cell in the sudoku puzzle
-		if (sudokuGrid[cell]) { //skip if cell is not empty
+
+	// For each cell in the sudoku puzzle
+	for (cell=0;cell<SUDOKU_CELLS;cell++) {
+
+		// If the cell already has a value: skip it.
+		if (sudokuGrid[cell]) {
 			continue;
 		}
-		for (i=1;i<=SUDOKU_BOX_CELLS;i++) { //for each possibility for each cell
+
+		// Try each possible value for empty cells.
+		for (i=1;i<=SUDOKU_BOX_CELLS;i++) {
 			if (isLegal(cell, i, sudokuGrid)) {
-				if (sudokuGrid[cell]) { //if a second possibility is found, set cell to zero and try next cell
+
+				// A value will have been set already if this is not the first
+				// possible value and so you can safely reset the cell and
+				// continue the search.
+				if (sudokuGrid[cell]) {
+					result = 0;
 					sudokuGrid[cell] = 0;
 					break;
 				}
+
+				// If this is the first possible value that is found, the cell
+				// will be set accordingly.
 				else {
 					sudokuGrid[cell] = i;
+					result = 1;
 				}
 			}
-		}
-		if (sudokuGrid[cell]) {
-			result = 1;
 		}
 	}
 	return result;
 }
 
+// Crosshatching is one of the more advanced techniques used. It passes
+// through groups of cells (boxes, rows, columns) and finds if there are any
+// cells which are the only one in the group to have a number as a possibility.
+//
+// i.e. If there is only one cell in a box which can contain the number '6',
+// that cell must be '6' even if the cell has other legal possibilities.
 crossHatching(int sudokuGrid[SUDOKU_CELLS]) {
 	int member, group, poss, i, n;
 	int result = 0;
@@ -184,7 +217,8 @@ crossHatching(int sudokuGrid[SUDOKU_CELLS]) {
 	return result;
 }
 
-setGrid(int from[SUDOKU_CELLS], int to[SUDOKU_CELLS]) { //turns 'to' into an identical copy of 'from'
+// Duplicates a sudoku puzzle array.
+setGrid(int from[SUDOKU_CELLS], int to[SUDOKU_CELLS]) {
 	int i;
 	for (i=0;i<SUDOKU_CELLS;i++) {
 		to[i] = from[i];
@@ -192,22 +226,28 @@ setGrid(int from[SUDOKU_CELLS], int to[SUDOKU_CELLS]) { //turns 'to' into an ide
 	return 0;
 }
 
-int isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]) { //is 'possibility' legal in 'cell' of the 'sudokuGrid'
+// Tests if a possible value is legal in the puzzle.
+int isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]) {
 	int i;
 	int column = cellColumn(cell);
 	int row = cellRow(cell);
 	int box = cellBox(cell);
 
+	// Test if it clashes with cells in the same column
 	for (i=0;i<SUDOKU_COLUMNS;i++) {
 		if (possibility == sudokuGrid[columnCell(column, i)] && cell != columnCell(column, i)) {
 			return 0;
 		}
 	}
+
+	// ...row
 	for (i=0;i<SUDOKU_ROWS;i++) {
 		if (possibility == sudokuGrid[rowCell(row, i)] && cell != rowCell(row, i)) {
 			return 0;
 		}
-	}	
+	}
+
+	// ...box
 	for (i=0;i<SUDOKU_BOX_CELLS;i++) {
 		if (possibility == sudokuGrid[boxCell(box, i)] && cell != boxCell(box, i)) {
 			return 0;
@@ -216,61 +256,65 @@ int isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]) { //is 'pos
 	return 1;
 }
 
-int isSolved(int sudokuGrid[SUDOKU_CELLS]){ // -1 Failed | 0 Unsolved | 1 Solved
-	int cell, legalsfound, i;
-	int status = 0;
-	for (cell=0;cell<SUDOKU_CELLS;cell++) {
-		if (!sudokuGrid[cell]) { //if an empty cell is found
-			legalsfound = 0;
-			for (i=1;i<=SUDOKU_BOX_CELLS;i++) {
-				if (isLegal(cell, i, sudokuGrid)) {
-					legalsfound++;
+enum status isSolved(int sudokuGrid[SUDOKU_CELLS]){
+	// the state is set to SOLVED only once at the beginning. If any problems
+	// are found, the state will be changed and will not return SOLVED.
+	enum status state = SOLVED;
+	int i, j;
+	for (i=0; i<SUDOKU_CELLS; i++) {
+
+		// If the cell is empty, then we know that the puzzle MAY be unsolvable
+		// and thus in a failed state...
+		if (!sudokuGrid[i]) {
+			state = FAILED;
+
+			// However if the cell has any legal possible value, the puzzle
+			// may not be in a failed state and the state is set back to
+			// INCOMPLETE.
+			for (j=0;j<SUDOKU_BOX_CELLS; j++) {
+				if (isLegal(i, j, sudokuGrid)) {
+					state = INCOMPLETE;
+					break;
 				}
 			}
-			if (legalsfound) {
-				status = 2;
+
+			// If however, there are no legal possible values for the cell,
+			// the state will have remained FAILED.
+			if (state == FAILED) {
+				return FAILED;
 			}
-			else {
-				return -1;
-			}
-		}
-		else { //if non empty
-			if (!isLegal(cell, sudokuGrid[cell], sudokuGrid)) {
-				return -1;
-			}
-			if (status < 2) {
-				status = 1;
-			}
+
 		}
 	}
-	switch (status) {
-		case 1:
-			return 1;
-		case 2:
-			return 0;
-	}
+	return state;
 }
 
-int boxCell(int box, int member) { //returns the cells number of 'member' of 'box'
+//returns the cells number of 'member' of 'box'
+int boxCell(int box, int member) {
 	return (27*(box/3)) + (3*(box%3)) + (member%3) + (9*(member/3));
 }
 
-int cellBox(int cell) { //returns the box number of 'cell'
+ //returns the box number of 'cell'
+int cellBox(int cell) {
 	return (3*(cellRow(cell)/3)) + (cellColumn(cell)/3);
 }
 
-int rowCell(int row, int member) { //returns the cell number of 'member' of 'row'
+//returns the cell number of 'member' of 'row'
+int rowCell(int row, int member) {
 	return (9*row) + member;
 }
 
-int cellRow(int cell) { //returns row number of 'cell'
+//returns row number of 'cell'
+int cellRow(int cell) {
 	return cell / 9;
 }
 
-int columnCell(int column, int member) { //returns the cell number of 'member' of 'column'
+//returns the cell number of 'member' of 'column'
+int columnCell(int column, int member) {
 	return (9*member) + column;
 }
 
-int cellColumn(int cell) { //returns column number of cell
+//returns column number of cell
+int cellColumn(int cell) {
 	return cell % 9;
 }

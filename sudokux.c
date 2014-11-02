@@ -18,7 +18,6 @@ main(int argc, char *argv[]) {
 
 	// Number of puzzles solved and failed.
 	int			solved =		0;
-	int			failed =		0;
 
 	// Total number of problems to be solved.
 	int			problemCount =	0;
@@ -55,6 +54,7 @@ main(int argc, char *argv[]) {
 				break;
 		}
 		displayPuzzle(window.solved, problemList[i]);
+		updateStatistics(i, solved, problemCount, window.statistics);
 		getch();
 	}
 
@@ -64,7 +64,8 @@ main(int argc, char *argv[]) {
 	// Print stats and percentages
 	percentSolved = solved;
 	percentSolved = 100 * percentSolved / problemCount;
-	printf("%d(%.2f%%) solved out of %d\n", solved, percentSolved, problemCount);
+	printf("%d (%.2f%%) solved out of %d\n",
+		solved, percentSolved, problemCount);
 
 	return 0;
 }
@@ -119,6 +120,7 @@ int **fileTo2DArray(char filename[MAX_FILENAME_LENGTH], int *problemCount) {
 	// free up allocated space for storing individual lines and close the file
 	free(line);
 	fclose(fp);
+
 	return problemList;
 }
 
@@ -133,6 +135,7 @@ errCheck(int argc, char *argv[]) { //checks for errors in the arguments
 		printf("Err: File does not exists\n");
 		return 0;
 	}
+
 	return 1;
 }
 
@@ -140,12 +143,8 @@ void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window)
 	// Get the centre of the terminal screen
 	initscr();
 
-	// struct coordinates centre;
-	// getmaxyx(stdscr, centre.y, centre.x);
-	// centre.x = centre.x / 2;
-	// centre.y = centre.y / 2;
-
 	curs_set(0);
+	noecho();
 
 	// Print filename at the top of the window
 	mvprintw(0, (COLS / 2) - (strlen(filename)/2), filename);
@@ -157,18 +156,26 @@ void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window)
 	// feel free to change what you see fit.
 	WINDOW *unsolvedwin;
 	unsolvedwin = newwin(ASCII_HEIGHT, ASCII_WIDTH, ASCII_TOP_MARGIN,
-					(COLS / 2) - (ASCII_WIDTH + (ASCII_CENTRE_MARGIN / 2)));
+		(COLS / 2) - (ASCII_WIDTH + (ASCII_CENTRE_MARGIN / 2)));
 	wrefresh(unsolvedwin);
 
 	// See above comment. Notice that this window is placed to the write
 	// instead of the left.
 	WINDOW *solvedwin;
 	solvedwin = newwin(ASCII_HEIGHT, ASCII_WIDTH, ASCII_TOP_MARGIN,
-					(COLS / 2) + (ASCII_CENTRE_MARGIN / 2));
+		(COLS / 2) + (ASCII_CENTRE_MARGIN / 2));
 	wrefresh(solvedwin);
+
+	// Window for the statistics below the puzzles.
+	WINDOW *statisticswin;
+	statisticswin = newwin(NUMBER_OF_STATISTICS, STATISTICS_WIDTH,
+		ASCII_TOP_MARGIN + ASCII_HEIGHT, (COLS / 2) - (STATISTICS_WIDTH / 2));
 
 	window->unsolved = unsolvedwin;
 	window->solved	 = solvedwin;
+	window->statistics = statisticswin;
+
+	return;
 }
 
 
@@ -176,7 +183,7 @@ void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window)
 // correct size. This function needs to be rewritten to avoid assumptions and
 // display puzzles of other sizes than 9x9.
 // >muh magic numbers
-displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[SUDOKU_CELLS]) {
+void displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[SUDOKU_CELLS]) {
 	int i;
 	struct coordinates coord = {0, 0};
 	mvwprintw(puzzleWin, ++coord.y, 0,"+ - - - + - - - + - - - +");
@@ -210,4 +217,22 @@ displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[SUDOKU_CELLS]) {
 		}
 	}
 	wrefresh(puzzleWin);
+
+	return;
+}
+
+void updateStatistics(int attempts, int solved, int problemCount, WINDOW *statistics) {
+	int failed = (attempts+1) - solved;
+	int remaining = problemCount - attempts;
+	int currenty = 0;
+	int centre = STATISTICS_WIDTH / 2;
+
+	mvwprintw(statistics, ++currenty, centre-16, "Sudoku Number:    %d", attempts+1);
+	mvwprintw(statistics, ++currenty, centre-9, "Solved:    %d", solved);
+	mvwprintw(statistics, ++currenty, centre-9, "Failed:    %d", failed);
+	mvwprintw(statistics, ++currenty, centre-12, "Remaining:    %d", (remaining)-1);
+
+	wrefresh(statistics);
+
+	return;
 }

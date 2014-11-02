@@ -10,7 +10,7 @@ I have included two files in this directory which contain a number of sudoku pro
 ##HOWTO compile
 $ make
 
-There are some dependencies needed to make this work but make shall tell you.
+The only real dependency is ncurses-dev.
 ##HOWTO run
 $ ./sudokux exampleproblems/small
 ##Example output

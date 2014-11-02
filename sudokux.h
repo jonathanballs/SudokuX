@@ -70,5 +70,5 @@ void displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[SUDOKU_CELLS]);
 void updateStatistics(int attempts, int solved, int problemCount, WINDOW *statistics);
 
 // gamesolver.c
-enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]);
-enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]);
+// enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]);
+// enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]);

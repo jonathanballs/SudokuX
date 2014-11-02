@@ -103,7 +103,7 @@ pencilIn(int sudokuGrid[SUDOKU_CELLS]) { //sets cells which have only one possib
 		if (sudokuGrid[cell]) { //skip if cell is not empty
 			continue;
 		}
-		for (i=1;i<SUDOKU_BOX_CELLS;i++) { //for each possibility for each cell
+		for (i=1;i<=SUDOKU_BOX_CELLS;i++) { //for each possibility for each cell
 			if (isLegal(cell, i, sudokuGrid)) {
 				if (sudokuGrid[cell]) { //if a second possibility is found, set cell to zero and try next cell
 					sudokuGrid[cell] = 0;

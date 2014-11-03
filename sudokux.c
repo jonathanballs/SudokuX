@@ -11,7 +11,7 @@
 #include <ncurses.h>
 
 #include "sudokux.h"
-#include "gamesolver.c"
+#include "gamesolver.h"
 
 main(int argc, char *argv[]) {
 	int			i, j;
@@ -55,7 +55,6 @@ main(int argc, char *argv[]) {
 		}
 		displayPuzzle(window.solved, problemList[i]);
 		updateStatistics(i, solved, problemCount, window.statistics);
-		getch();
 	}
 
 	// End ncurses screen

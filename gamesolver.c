@@ -46,6 +46,9 @@
 */
 
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+#include "gamesolver.h"
 
 // The main function accepts a puzzle array as an argument and uses other
 // functions to solve them. The array is modified directly so there is no need
@@ -55,7 +58,7 @@ enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]) {
 	// These two functions will fill in cells which only have one posssible
 	// value. They will continue passing over the puzzle until neither are able
 	// to fill in any more.
-	while (oneLegal(sudokuGrid) || crossHatching(sudokuGrid)) {
+	while (oneLegal(sudokuGrid) || crossHatcher(sudokuGrid)) {
 		;
 	}
 
@@ -67,6 +70,42 @@ enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]) {
 		case INCOMPLETE:
 			return constraintSearch(sudokuGrid);
 	}
+}
+
+enum status puzzleStatus(int sudokuGrid[SUDOKU_CELLS]){
+	enum status state = SOLVED;
+	int i, j;
+	for (i=0; i<SUDOKU_CELLS; i++) {
+
+		// If the cell is empty, then we know that the puzzle MAY be unsolvable
+		// and thus in a failed state...
+		if (!sudokuGrid[i]) {
+			state = FAILED;
+
+			// However if the cell has any legal possible value, the puzzle
+			// may not be in a failed state and the state is set back to
+			// INCOMPLETE.
+			for (j=1;j<=SUDOKU_BOX_CELLS; j++) {
+				if (isLegal(i, j, sudokuGrid)) {
+					state = INCOMPLETE;
+					break;
+				}
+			}
+
+			// If however, there are no legal possible values for the cell,
+			// the state will have remained FAILED.
+			if (state == FAILED) {
+				return FAILED;
+			}
+
+		}
+
+		// If the cell has a value, check that it is legal
+		else if (!isLegal(i, sudokuGrid[i], sudokuGrid)) {
+			return FAILED;
+		}
+	}
+	return state;
 }
 
 // Trial & Error.
@@ -154,68 +193,61 @@ bool oneLegal(int sudokuGrid[SUDOKU_CELLS]) {
 //
 // i.e. If there is only one cell in a box which can contain the number '6',
 // that cell must be '6' even if the cell has other legal possibilities.
-crossHatching(int sudokuGrid[SUDOKU_CELLS]) {
-	int member, group, poss, i, n;
-	int result = 0;
-	for (group=0; group<SUDOKU_ROWS; group++) {
-		for (poss=1;poss<=SUDOKU_BOX_CELLS;poss++) {
-			n=0;
-			for (member=0;member<SUDOKU_BOX_CELLS;member++) {
-				if(!sudokuGrid[rowCell(group, member)] && isLegal(rowCell(group, member), poss, sudokuGrid)) { //if empty and poss is legal then increase n
-					++n;
-				}
-			}
-			if (n==1) { //if there is only one possibility
-				for (member=0;member<SUDOKU_BOX_CELLS;member++) {
-					if(!sudokuGrid[rowCell(group, member)] && isLegal(rowCell(group, member), poss, sudokuGrid)) {
-						sudokuGrid[rowCell(group, member)] = poss;
-						result = 1;
-						break;
-					}
-				}
-			}
-		}
+
+bool crossHatcher(int sudokuGrid[SUDOKU_CELLS]) {
+	int x = 0;
+	x = x + crossHatch(sudokuGrid, &columnCell);
+	x = x + crossHatch(sudokuGrid, &rowCell);
+	x = x + crossHatch(sudokuGrid, &boxCell);
+	
+	if (x) {
+		return true;
 	}
-	for (group=0; group<SUDOKU_COLUMNS; group++) {
-		for (poss=1;poss<=SUDOKU_BOX_CELLS;poss++) {
-			n=0;
-			for (member=0;member<SUDOKU_BOX_CELLS;member++) {
-				if(!sudokuGrid[columnCell(group, member)] && isLegal(columnCell(group, member), poss, sudokuGrid)) { //if empty and poss is legal then increase n
-					++n;
-				}
-			}
-			if (n==1) { //if there is only one possibility
-				for (member=0;member<SUDOKU_BOX_CELLS;member++) {
-					if(!sudokuGrid[columnCell(group, member)] && isLegal(columnCell(group, member), poss, sudokuGrid)) {
-						sudokuGrid[columnCell(group, member)] = poss;
-						result = 1;
-						break;
-					}
-				}
-			}
-		}
+	else {
+		return false;
 	}
-	for (group=0; group<SUDOKU_BOX_CELLS; group++) {
-		for (poss=1;poss<=SUDOKU_BOX_CELLS;poss++) {
-			n=0;
-			for (member=0;member<SUDOKU_BOX_CELLS;member++) {
-				if(!sudokuGrid[boxCell(group, member)] && isLegal(boxCell(group, member), poss, sudokuGrid)) { //if empty and poss is legal then increase n
-					++n;
-				}
-			}
-			if (n==1) { //if there is only one possibility
-				for (member=0;member<SUDOKU_BOX_CELLS;member++) {
-					if(!sudokuGrid[boxCell(group, member)] && isLegal(boxCell(group, member), poss, sudokuGrid)) {
-						sudokuGrid[boxCell(group, member)] = poss;
-						result = 1;
-						break;
-					}
-				}
-			}
-		}
-	}
-	return result;
 }
+
+bool crossHatch(int sudokuGrid[SUDOKU_CELLS], int (*groupMember)(int, int)) {
+	int group;
+	int cell;
+	int i;
+	bool success = false;
+
+	// Must be 8 so that memsetting works properly.
+	int8_t frequency[SUDOKU_ROWS+10];
+
+	for (group=0; group<SUDOKU_ROWS; group++) {
+		memset(frequency, UNFOUND, sizeof(frequency));
+		for (cell=0; cell<SUDOKU_ROWS; cell++) {
+
+			// Skip cells which already have values.
+			if (sudokuGrid[(*groupMember)(group, cell)]) {
+				continue;
+			}
+
+			for (i=1; i<=SUDOKU_ROWS; i++) {
+				if (isLegal((*groupMember)(group, cell), i, sudokuGrid)) {
+					if (frequency[i] != UNFOUND) {
+						frequency[i] = REFOUND;
+					}
+					else {
+						frequency[i] = cell;
+					}
+				}
+			}
+		}
+
+		for (i=1; i<=SUDOKU_ROWS; i++) {
+			if (frequency[i] != REFOUND && frequency[i] != UNFOUND) {
+				sudokuGrid[(*groupMember)(group, frequency[i])] = i;
+				success = true;
+			}
+		}
+	}
+	return success;
+}
+
 
 // Duplicates a sudoku puzzle array.
 setGrid(int from[SUDOKU_CELLS], int to[SUDOKU_CELLS]) {
@@ -254,39 +286,6 @@ bool isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]) {
 		}
 	}
 	return true;
-}
-
-enum status puzzleStatus(int sudokuGrid[SUDOKU_CELLS]){
-	// the state is set to SOLVED only once at the beginning. If any problems
-	// are found, the state will be changed and will not return SOLVED.
-	enum status state = SOLVED;
-	int i, j;
-	for (i=0; i<SUDOKU_CELLS; i++) {
-
-		// If the cell is empty, then we know that the puzzle MAY be unsolvable
-		// and thus in a failed state...
-		if (!sudokuGrid[i]) {
-			state = FAILED;
-
-			// However if the cell has any legal possible value, the puzzle
-			// may not be in a failed state and the state is set back to
-			// INCOMPLETE.
-			for (j=0;j<SUDOKU_BOX_CELLS; j++) {
-				if (isLegal(i, j, sudokuGrid)) {
-					state = INCOMPLETE;
-					break;
-				}
-			}
-
-			// If however, there are no legal possible values for the cell,
-			// the state will have remained FAILED.
-			if (state == FAILED) {
-				return FAILED;
-			}
-
-		}
-	}
-	return state;
 }
 
 //returns the cells number of 'member' of 'box'

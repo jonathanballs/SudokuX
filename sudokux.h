@@ -40,13 +40,6 @@
 //max width for a statistic. will be truncated after this.
 #define STATISTICS_WIDTH			40
 
-// Used to handle gamesolver.c return values instead of relying on ints.
-enum status {
-	SOLVED,
-	INCOMPLETE,
-	FAILED
-};
-
 // These coordinates are used at various points when dealing with ncurses.
 struct coordinates
 {
@@ -54,8 +47,6 @@ struct coordinates
 	int y;
 };
 
-// These windows are all sub-areas of the main sdtscr in ncurses. Their
-// functions whould be fairly self explanatory.
 struct windows
 {
 	WINDOW *unsolved;
@@ -63,15 +54,12 @@ struct windows
 	WINDOW *statistics;
 };
 
+// These windows are all sub-areas of the main sdtscr in ncurses. Their
+// functions whould be fairly self explanatory.
+
+
 // sudokux.c
 void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window);
 int **fileTo2DArray(char filename[MAX_FILENAME_LENGTH], int *problemCount);
 void displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[SUDOKU_CELLS]);
 void updateStatistics(int attempts, int solved, int problemCount, WINDOW *statistics);
-
-// gamesolver.c
-enum status solveSudoku(int sudokuGrid[SUDOKU_CELLS]);
-enum status constraintSearch(int sudokuGrid[SUDOKU_CELLS]);
-enum status puzzleStatus(int sudokuGrid[SUDOKU_CELLS]);
-bool oneLegal(int sudokuGrid[SUDOKU_CELLS]);
-bool isLegal(int cell, int possibility, int sudokuGrid[SUDOKU_CELLS]);

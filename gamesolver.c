@@ -46,8 +46,6 @@
 */
 
 #include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 #include "gamesolver.h"
 
 // The main function accepts a puzzle array as an argument and uses other
@@ -215,10 +213,12 @@ bool crossHatch(int sudokuGrid[SUDOKU_CELLS], int (*groupMember)(int, int)) {
 	bool success = false;
 
 	// Must be 8 so that memsetting works properly.
-	int8_t frequency[SUDOKU_ROWS+10];
+	int frequency[SUDOKU_ROWS+1];
 
 	for (group=0; group<SUDOKU_ROWS; group++) {
-		memset(frequency, UNFOUND, sizeof(frequency));
+		for (i=0; i<=SUDOKU_ROWS; i++) {
+			frequency[i] = UNFOUND;
+		}
 		for (cell=0; cell<SUDOKU_ROWS; cell++) {
 
 			// Skip cells which already have values.

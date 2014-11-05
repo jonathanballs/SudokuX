@@ -40,6 +40,16 @@
 //max width for a statistic. will be truncated after this.
 #define STATISTICS_WIDTH			40
 
+/*
+** SETTINGS FLAGS
+*/
+
+// silent mode: turns off curses
+#define FLAGS_SILENT_MODE				'-s'
+
+// help message
+#define FLAGS_HELP_MESSAGE				'-h'
+
 // These coordinates are used at various points when dealing with ncurses.
 struct coordinates
 {
@@ -47,6 +57,8 @@ struct coordinates
 	int y;
 };
 
+// These windows are all sub-areas of the main sdtscr in ncurses. Their
+// functions whould be fairly self explanatory.
 struct windows
 {
 	WINDOW *unsolved;
@@ -54,9 +66,9 @@ struct windows
 	WINDOW *statistics;
 };
 
-// These windows are all sub-areas of the main sdtscr in ncurses. Their
-// functions whould be fairly self explanatory.
-
+struct settings {
+	bool cursesMode;
+};
 
 // sudokux.c
 void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window);

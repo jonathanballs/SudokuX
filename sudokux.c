@@ -9,6 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <ncurses.h>
+#include <stdbool.h>
 
 #include "sudokux.h"
 #include "gamesolver.h"
@@ -28,24 +29,29 @@ main(int argc, char *argv[]) {
 	// Variable to hold filename of sudoku puzzles
 	char		filename[MAX_FILENAME_LENGTH];
 
+	// Struct that contains all the preferences.
+	struct settings preferences;
+
 	// Check whether an argument has been passed and whether it contains an
 	// accessible filename.
-	if (!errCheck(argc, argv))
+	if (!argCheck(argc, argv, &preferences, filename))
 		return;
-
-	// argv[1] is where filename should be. This needs to be updated.
-	strcpy(filename, argv[1]);
 
 	// Gets all _valid_ sudoku puzzles from the file and puts them into a
 	// large array.
 	int **problemList = fileTo2DArray(filename, &problemCount);
 
-	// Start ncurses and create windows etc.
 	struct windows window;
-	prepareterminal(filename, &window);
+	
+	// Start ncurses and create windows etc.
+	if (preferences.cursesMode) {
+		prepareterminal(filename, &window);
+	}
 
 	for (i=0; i<problemCount; i++) {
-		displayPuzzle(window.unsolved, problemList[i]);
+			if (preferences.cursesMode) {
+				displayPuzzle(window.unsolved, problemList[i]);
+			}
 		switch (solveSudoku(problemList[i])){
 			case SOLVED:
 				solved++;
@@ -53,12 +59,16 @@ main(int argc, char *argv[]) {
 			case FAILED:
 				break;
 		}
-		displayPuzzle(window.solved, problemList[i]);
-		updateStatistics(i, solved, problemCount, window.statistics);
+		if (preferences.cursesMode) {
+			displayPuzzle(window.solved, problemList[i]);
+			updateStatistics(i, solved, problemCount, window.statistics);
+		}
 	}
 
 	// End ncurses screen
-	endwin();
+	if (preferences.cursesMode) {
+		endwin();
+	}
 
 	// Print stats and percentages
 	percentSolved = solved;
@@ -123,15 +133,33 @@ int **fileTo2DArray(char filename[MAX_FILENAME_LENGTH], int *problemCount) {
 	return problemList;
 }
 
-errCheck(int argc, char *argv[]) { //checks for errors in the arguments
+// Parses argument flags and filename errors
+argCheck(int argc, char *argv[], struct settings *preferences, char filename[MAX_FILENAME_LENGTH]) {
+	int i;
+
 	if (!(argc-1)) {
 		printf("Err: Argument required\n");
 		return 0;
 	}
-	char filename[256];
-	strcpy(filename, argv[1]);
-	if(access( filename, R_OK ) == -1) {
-		printf("Err: File does not exists\n");
+
+	if (strcmp(argv[1], "-h") == 0) {
+		printf(">muh help\n");
+		return 0;
+	}
+
+	// Cycle through arguments which aren't filename or command name
+	for (i=1; i<argc-1; i++) {
+		if (strcmp(argv[i], "-s") == 0) {
+			preferences->cursesMode = false;
+		}
+	}
+
+	// argv[argc - 1] is where filename should be.
+	strcpy(filename, argv[argc-1]);
+
+	// Check that the filename is actually accessible
+	if(access(filename, R_OK ) == -1) {
+		printf("Fatal Error: File does not exists\n");
 		return 0;
 	}
 

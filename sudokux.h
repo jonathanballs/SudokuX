@@ -50,6 +50,12 @@
 // help message
 #define FLAGS_HELP_MESSAGE				'-h'
 
+/*
+** DEFAULT SETTINGS
+*/
+
+// curses mode
+#define DEFAULT_CURSES_MODE				true
 // These coordinates are used at various points when dealing with ncurses.
 struct coordinates
 {

@@ -147,6 +147,9 @@ argCheck(int argc, char *argv[], struct settings *preferences, char filename[MAX
 		return 0;
 	}
 
+	// There needs to be a better way to set defaults.
+	preferences->cursesMode = DEFAULT_CURSES_MODE;
+
 	// Cycle through arguments which aren't filename or command name
 	for (i=1; i<argc-1; i++) {
 		if (strcmp(argv[i], "-s") == 0) {

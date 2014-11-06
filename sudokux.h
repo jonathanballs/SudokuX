@@ -1,3 +1,6 @@
+//version number
+#define	SUDOKUX_VERSION_NUMBER		1.5
+
 //width of a sudoku puzzle.
 #define SUDOKU_COLUMNS				9
 
@@ -81,3 +84,4 @@ void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window)
 int **fileTo2DArray(char filename[MAX_FILENAME_LENGTH], int *problemCount);
 void displayPuzzle(WINDOW *puzzleWin, int sudokupuzzle[SUDOKU_CELLS]);
 void updateStatistics(int attempts, int solved, int problemCount, WINDOW *statistics);
+void printVersionNumber();

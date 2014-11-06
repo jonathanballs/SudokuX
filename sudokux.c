@@ -143,7 +143,19 @@ argCheck(int argc, char *argv[], struct settings *preferences, char filename[MAX
 	}
 
 	if (strcmp(argv[1], "-h") == 0) {
-		printf(">muh help\n");
+		printVersionNumber();
+		printf("\n");
+		printf("USAGE: sudokux [OPTION]... [FILE]\n");
+		printf("\n");
+		printf("OPTIONS:\n");
+		printf("    -s    Silent mode. Curses mode is not displayed.\n");
+		printf("    -v    Print the version number\n");
+		printf("    -h    Display this help message\n");
+		return 0;
+	}
+
+	if (strcmp(argv[1], "-v") == 0){
+		printVersionNumber();
 		return 0;
 	}
 
@@ -154,6 +166,9 @@ argCheck(int argc, char *argv[], struct settings *preferences, char filename[MAX
 	for (i=1; i<argc-1; i++) {
 		if (strcmp(argv[i], "-s") == 0) {
 			preferences->cursesMode = false;
+		} else {
+			printf("Invalid command entered: %s\n", argv[i]);
+			return 0;
 		}
 	}
 
@@ -167,6 +182,10 @@ argCheck(int argc, char *argv[], struct settings *preferences, char filename[MAX
 	}
 
 	return 1;
+}
+
+void printVersionNumber() {
+	printf("SudokuX version: %.2f\n", SUDOKUX_VERSION_NUMBER);
 }
 
 void prepareterminal(char filename[MAX_FILENAME_LENGTH], struct windows* window) {
